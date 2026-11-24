@@ -4,7 +4,7 @@ Aim Ledger is a play-to-earn scoreboard for a browser aim trainer, built as a Gn
 
 ## What it does
 
-- **Play** a 20-second aim trainer (in `web/index.html`, also served on GitHub Pages).
+- **Play** a 20-second aim trainer (in `docs/index.html`, also served on GitHub Pages).
 - **Submit** your score to the realm. Runs are rate-limited to one per 10 seconds and credits are capped daily, so the reward curve stays bounded.
 - **Build a streak** by playing on consecutive UTC days.
 - **Climb the leaderboard**, which ranks players by best score with address as the tie-breaker.
@@ -25,7 +25,7 @@ The realm is deployed from the agent key generated for this build. Its address i
 
 ```
 realm/           Gno realm source, gnomod.toml and unit tests
-web/             Standalone aim trainer (plain HTML/JS, no dependencies)
+docs/index.html  Standalone aim trainer (plain HTML/JS, no dependencies)
 ```
 
 ## Public API
