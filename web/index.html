@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aim Ledger — Companion Trainer</title>
+<style>
+  :root{--bg:#0b0d12;--panel:#141821;--line:#252b38;--ink:#f2f4f8;--muted:#98a1b3;--accent:#5eead4;--hot:#fb7185}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+  header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em}
+  .mark{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#04211d;display:grid;place-items:center;font-weight:800}
+  .brand small{display:block;font-size:10px;color:var(--muted);font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+  .links{display:flex;gap:16px;font-size:13px;color:var(--muted)}
+  .links a{color:inherit;text-decoration:none}
+  .links a:hover{color:var(--accent)}
+  h1{font-size:clamp(32px,5vw,52px);line-height:1.05;letter-spacing:-.03em;margin:40px 0 12px}
+  h1 em{font-style:normal;color:var(--accent)}
+  p.lede{color:var(--muted);max-width:60ch;line-height:1.6;margin:0 0 26px}
+  .hud{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .stat .v{font-size:28px;font-weight:700;line-height:1.1;margin-top:4px;font-variant-numeric:tabular-nums}
+  .arena{position:relative;height:420px;background:radial-gradient(120% 100% at 50% 0%,#182031,var(--panel));border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:crosshair;user-select:none}
+  .arena::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:40px 40px;opacity:.35;pointer-events:none}
+  .target{position:absolute;width:52px;height:52px;border-radius:50%;border:3px solid var(--ink);background:radial-gradient(circle at 50% 50%,var(--hot) 0 22%,var(--ink) 24% 28%,transparent 30%);transform:translate(-50%,-50%);animation:pop .14s ease-out}
+  @keyframes pop{from{transform:translate(-50%,-50%) scale(.4);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+  .overlay{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:rgba(11,13,18,.82);backdrop-filter:blur(3px);z-index:3}
+  .overlay h2{margin:0 0 8px;font-size:30px}
+  .overlay p{color:var(--muted);margin:0 0 20px}
+  button{border:0;border-radius:10px;padding:13px 22px;font:inherit;font-weight:700;cursor:pointer;background:var(--accent);color:#04211d}
+  button:hover{filter:brightness(1.08)}
+  button:active{transform:scale(.98)}
+  .result{display:none;margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .result.show{display:block}
+  .result .score{font-size:46px;font-weight:800;color:var(--accent);line-height:1}
+  .result .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .result code{background:#0a0c10;border:1px solid var(--line);padding:10px 12px;border-radius:8px;font-size:14px}
+  .ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .notes{margin-top:34px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:14px;line-height:1.65}
+  .notes b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="mark">A</span><span>Aim Ledger<small>Companion trainer</small></span></div>
+    <div class="links"><a href="https://github.com/JudeTulel/aimledger">Source</a><a href="https://gno.land">Gno.land</a></div>
+  </header>
+
+  <h1>Hit targets. <em>Earn on-chain.</em></h1>
+  <p class="lede">A 20-second aim trainer. Your score becomes credits in the Aim Ledger realm — where quests, streaks, the leaderboard and payouts are all settled on Gno.land testnet.</p>
+
+  <div class="hud">
+    <div class="stat"><div class="k">Score</div><div class="v" id="score">0</div></div>
+    <div class="stat"><div class="k">Time left</div><div class="v" id="time">20s</div></div>
+    <div class="stat"><div class="k">Accuracy</div><div class="v" id="acc">—</div></div>
+  </div>
+
+  <div class="arena" id="arena">
+    <div class="overlay" id="overlay">
+      <div><h2>Ready?</h2><p>Click as many targets as you can in 20 seconds.</p><button id="start">Start run</button></div>
+    </div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="k" style="color:var(--muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase">Run complete</div>
+    <div class="score" id="final">0</div>
+    <div class="row">
+      <code id="submitCode">score=0</code>
+      <button id="copy">Copy score</button>
+      <a class="ghost" id="realmLink" style="text-decoration:none;padding:11px 18px;border-radius:10px;font-size:14px" href="https://gno.land/r/g16aehkv63k62ege7z7c7g5zc58mljklvtdkxd3u/aimledger" target="_blank" rel="noopener">Submit on chain ↗</a>
+    </div>
+  </div>
+
+  <div class="notes">
+    <b>How the earn loop works.</b> Paste your score into the on-chain form. The realm rate-limits runs (10s), caps daily credits, tracks day streaks, and lets you redeem 100 credits for 0.001 GNOT from the funded prize pool. Scores are self-reported — the chain enforces rate and reward limits, not aim accuracy. That is an explicit trade-off for a fully on-chain demo.
+  </div>
+</div>
+
+<script>
+  const arena=document.getElementById('arena'), overlay=document.getElementById('overlay');
+  const scoreEl=document.getElementById('score'), timeEl=document.getElementById('time'), accEl=document.getElementById('acc');
+  const result=document.getElementById('result'), finalEl=document.getElementById('final'), submitCode=document.getElementById('submitCode');
+  let score=0, hits=0, shots=0, left=20, running=false, timer=null, spawner=null, target=null;
+
+  function place(){
+    if(target) target.remove();
+    target=document.createElement('div');
+    target.className='target';
+    const r=arena.getBoundingClientRect();
+    target.style.left=(40+Math.random()*(r.width-80))+'px';
+    target.style.top=(40+Math.random()*(r.height-80))+'px';
+    target.addEventListener('pointerdown', e=>{ e.stopPropagation(); shots++; hits++; score+=100; scoreEl.textContent=score; place(); });
+    arena.appendChild(target);
+  }
+  arena.addEventListener('pointerdown', e=>{ if(running && e.target===arena) shots++; });
+
+  function start(){
+    score=0; hits=0; shots=0; left=20; running=true;
+    scoreEl.textContent='0'; timeEl.textContent='20s'; accEl.textContent='—';
+    result.classList.remove('show'); overlay.style.display='none'; place();
+    timer=setInterval(()=>{ left--; timeEl.textContent=left+'s'; if(left<=0) finish(); },1000);
+    spawner=setInterval(()=>{ if(target) place(); },1400);
+  }
+  function finish(){
+    running=false; clearInterval(timer); clearInterval(spawner);
+    if(target){ target.remove(); target=null; }
+    accEl.textContent=shots?Math.round(hits/shots*100)+'%':'0%';
+    finalEl.textContent=score;
+    submitCode.textContent='score='+score;
+    result.classList.add('show');
+  }
+  document.getElementById('start').addEventListener('click',start);
+  document.getElementById('copy').addEventListener('click',async()=>{
+    try{ await navigator.clipboard.writeText(String(score)); document.getElementById('copy').textContent='Copied'; }
+    catch(_){ document.getElementById('copy').textContent='Copy failed'; }
+  });
+</script>
+</body>
+</html>
